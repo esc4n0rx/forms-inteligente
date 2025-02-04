@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../lib/supabase"; 
+import { supabase } from "../lib/supabase";
 import lojasJson from "../lib/lojas.json";
 
 export default function MainPage() {
@@ -9,9 +9,24 @@ export default function MainPage() {
   const [quantidade, setQuantidade] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [notification, setNotification] = useState("");
+  const [notificationType, setNotificationType] = useState("");
+
+  const showNotification = (message:string, type = "success") => {
+    setNotification(message);
+    setNotificationType(type);
+
+    setTimeout(() => {
+      setNotification("");
+      setNotificationType("");
+    }, 3000);
+  };
+
+  const sortedLojas = [...lojasJson.lojas].sort();
+
   const handleFinalizar = async () => {
     if (!lojaSelecionada || !quantidade) {
-      alert("Por favor, selecione uma loja e insira uma quantidade.");
+      showNotification("Por favor, selecione uma loja e insira uma quantidade.", "error");
       return;
     }
 
@@ -26,12 +41,12 @@ export default function MainPage() {
         throw error;
       }
 
-      alert("Pedido salvo com sucesso!");
+      showNotification("Pedido salvo com sucesso!", "success");
       setLojaSelecionada("");
       setQuantidade("");
     } catch (error) {
-      alert("Erro ao salvar o pedido. Tente novamente.");
       console.error(error);
+      showNotification("Erro ao salvar o pedido. Tente novamente.", "error");
     } finally {
       setLoading(false);
     }
@@ -45,19 +60,30 @@ export default function MainPage() {
         throw new Error("Erro ao enviar email.");
       }
   
-      alert("Email enviado com sucesso!");
+      showNotification("Email enviado com sucesso!", "success");
     } catch (error) {
       console.error(error);
-      alert("Falha ao gerar email.");
+      showNotification("Falha ao gerar email.", "error");
     }
   };
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-900 text-white">
       <div className="w-full max-w-md bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold text-center mb-2">Pedido de Loja</h1>
+        <h1 className="text-2xl font-bold text-center mb-2">Carregamento CD</h1>
         <p className="text-sm text-gray-400 text-center mb-6">
-          Selecione a loja e informe a quantidade.
+          Selecione a loja e informe a quantidade de pallets.
         </p>
+
+        {notification && (
+          <div
+            className={`mb-4 p-3 rounded ${
+              notificationType === "error" ? "bg-red-600" : "bg-green-600"
+            }`}
+          >
+            {notification}
+          </div>
+        )}
 
         <div className="mb-4">
           <label className="block text-gray-300 mb-1">Loja</label>
@@ -67,7 +93,7 @@ export default function MainPage() {
             onChange={(e) => setLojaSelecionada(e.target.value)}
           >
             <option value="">Selecione uma loja</option>
-            {lojasJson.lojas.map((loja, index) => (
+            {sortedLojas.map((loja, index) => (
               <option key={index} value={loja}>
                 {loja}
               </option>
@@ -76,7 +102,7 @@ export default function MainPage() {
         </div>
 
         <div className="mb-4">
-          <label className="block text-gray-300 mb-1">Quantidade</label>
+          <label className="block text-gray-300 mb-1">Quantidade de Pallets</label>
           <input
             type="number"
             className="w-full p-2 bg-gray-700 text-white rounded-md"

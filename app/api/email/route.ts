@@ -19,19 +19,7 @@ const transporter = nodemailer.createTransport({
 
 export async function GET() {
   try {
-    console.log("📌 Iniciando processo de envio de email...");
 
-    // Conferindo variáveis de ambiente
-    console.log("🔑 URL do Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log(
-      "🔑 CHAVE ANÔNIMA:",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "OK" : "NÃO DEFINIDA"
-    );
-    console.log("📧 Usuário do email:", process.env.EMAIL_USER);
-    console.log("🔐 Senha do email está definida?", !!process.env.EMAIL_PASS);
-
-    // 1️⃣ Buscar registros do Supabase
-    console.log("🔍 Buscando pedidos no Supabase...");
     const { data: pedidos, error } = await supabase
       .from("pedidos")
       .select("*");
@@ -41,7 +29,6 @@ export async function GET() {
       throw new Error("Erro ao buscar pedidos do banco de dados.");
     }
 
-    console.log("✅ Pedidos recebidos:", pedidos);
 
     if (!pedidos || pedidos.length === 0) {
       console.warn("⚠️ Nenhum pedido encontrado no banco.");
@@ -51,23 +38,15 @@ export async function GET() {
       );
     }
 
-    console.log(`✅ ${pedidos.length} pedidos encontrados.`);
-
-    // 2️⃣ Criar planilha
-    console.log("📄 Gerando planilha...");
     const worksheet = XLSX.utils.json_to_sheet(pedidos);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Pedidos");
 
-    console.log("📝 Convertendo planilha para buffer...");
     const planilhaBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "buffer",
     });
 
-    console.log("✅ Planilha gerada com sucesso.");
-
-    // 3️⃣ Configuração do Email
     console.log("✉️ Preparando email para envio...");
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -84,14 +63,9 @@ export async function GET() {
       ],
     };
 
-    console.log("📡 Testando conexão com SMTP...");
     await transporter.verify();
-    console.log("✅ Conexão com SMTP verificada.");
 
-    // 4️⃣ Enviar email
-    console.log("📨 Enviando email...");
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email enviado com sucesso!");
 
     return NextResponse.json({ message: "Email enviado com sucesso!" });
   } catch (error) {
